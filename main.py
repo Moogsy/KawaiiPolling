@@ -1,4 +1,5 @@
 from operator import index
+from sys import breakpointhook
 from gspread.spreadsheet import Spreadsheet
 import numpy as np
 from matplotlib import pyplot as plt
@@ -89,11 +90,17 @@ RATINGS = (
     "Kawaii"
 )
 
-RATING_START_LINE = 2
-RATING_END_LINE = RATING_START_LINE + len(POSES_INDEX) - 1
+RATING_START_INDEX = 1
+RATING_END_INDEX = RATING_START_INDEX + len(POSES_INDEX)
 
 RATING_START_COL = "C"
 RATING_END_COL = shift_letter_seq(RATING_START_COL, len(RATINGS) - 1)
+
+LINE_RANGES = [
+    (RATING_START_INDEX + k * (len(RATINGS) - 1), 
+     RATING_END_INDEX + k * len(RATINGS) - 1)
+    for k in range(len(CATEGORIES))
+]
 
 
 def load_worksheet() -> gspread.Spreadsheet:
@@ -113,14 +120,16 @@ def create_dataframe(raters_id: list[str]) -> pd.DataFrame:
     return pd.DataFrame(np.nan, index=index, columns=['Rating']) # type: ignore
 
 def fill_dataframe(df: pd.DataFrame, rating_sheets: list[gspread.Worksheet]):
-    shiftable_window = (
-        [RATING_START_COL, RATING_START_LINE], 
-        [RATING_END_COL,   RATING_END_LINE]
-    )
-
     for rs in rating_sheets:
-        tables = [row[lti(RATING_START_COL):ltn(RATING_END_COL)] for row in rs.get_all_values()]
+        trimmed_lines = [line[lti(RATING_START_COL):ltn(RATING_END_COL)] for line in rs.get_all_values()]
 
+        for line_range in LINE_RANGES:
+            start, end = line_range
+            ratings = trimmed_lines[start:end]
+
+            print(ratings)
+
+        return
 
 
 
@@ -134,12 +143,9 @@ def main():
     sh = load_worksheet()
     rating_sheets = [ws for ws in sh.worksheets() if ws.title.startswith('P')]
 
-    first = rating_sheets[0]
+    dataframe = create_dataframe([rs.title for rs in rating_sheets])
+    fill_dataframe(dataframe, rating_sheets)
 
-
-    # dataframe = create_dataframe([rs.title for rs in rating_sheets])
-
-    # print(dataframe.head())
 
 if __name__ == '__main__':
     main()
