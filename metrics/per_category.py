@@ -1,20 +1,10 @@
+import numpy as np
+import pandas as pd
+
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 
-import numpy as np
-import pandas as pd
-import pingouin as pg
-
-import metrics
-
-
-def load_df_from_csv(csv_path: str) -> pd.DataFrame:
-    df = pd.read_csv(csv_path, index_col=[0, 1, 2, 3], low_memory=False)
-    return df.reset_index() # Flatten the dataframe for easier access
-
-
-
-def metrics_per_category(df: pd.DataFrame, ncols: int = 2):
+def summary_ratings_per_category(df: pd.DataFrame, ncols: int = 2):
     grouped = df.groupby(['Category', 'Rating'])
     metrics = grouped['Score'].agg(
         Count = 'count',
@@ -85,14 +75,4 @@ def metrics_per_category(df: pd.DataFrame, ncols: int = 2):
 
     return metrics
 
-
-
-
-if __name__ == "__main__":
-    df = load_df_from_csv("all_ratings.csv")
-    #metrics.summary_ratings_per_category(df)
-    # metrics.plot_kruskal_significance_logscale(df)
-    # metrics.plot_correlation_matrix(df)
-    # metrics.plot_ceiling_and_floor_heatmaps(df)
-    metrics.plot_variability_heatmap_symmetric_log(df)
 
